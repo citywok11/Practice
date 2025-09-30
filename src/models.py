@@ -118,6 +118,11 @@ class _DestinationsList(list):
             )
         self._reload()
 
+    def delete(self, id: int) -> None:
+        with self._conn.cursor() as cur:
+            cur.execute("DELETE FROM destinations WHERE id = %s;", (id,))
+        self._reload()
+
 
 # Expose the list-like object expected by main.py
 destinations = _DestinationsList()
