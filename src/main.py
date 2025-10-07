@@ -44,6 +44,26 @@ def delete_destination(id):
     return jsonify({"status": "deleted", "id": id}), 200
 
 
+@app.delete("/destinations/soft-delete/<id>")
+def soft_delete_destination(id):
+    is_soft_deleted = destinations.soft_delete(id)
+    return jsonify({"status": "soft delete", "id": id, "is_soft_deleted": is_soft_deleted}), 200
+
+@app.put("/destinations/undelete-delete/<id>")
+def undo_soft_delete_destination(id):
+    is_soft_deleted = destinations.undelete_delete(id)
+    return jsonify({"status": "undone soft delete", "id": id, "is_soft_deleted": is_soft_deleted}), 200
+
+
+
+@app.get("/new_row")
+def add_new_row():
+    try:
+        is_deleted = destinations.add_new_row()
+        return jsonify({"is_deleted": is_deleted})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)

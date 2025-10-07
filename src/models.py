@@ -47,6 +47,7 @@ def _ensure_schema(conn) -> None:
         )
 
 
+
 def _seed_if_empty(conn) -> None:
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute("SELECT COUNT(*) AS c FROM destinations;")
@@ -68,7 +69,7 @@ def _seed_if_empty(conn) -> None:
 
 def _fetch_all(conn) -> List[Dict[str, Any]]:
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
-        cur.execute("SELECT id, name, country, attractions FROM destinations ORDER BY id ASC;")
+        cur.execute("SELECT id, name, country, attractions, deleted FROM destinations ORDER BY id ASC;")
         rows = cur.fetchall()
         # Ensure attractions is a native Python list
         cleaned = []
@@ -79,6 +80,7 @@ def _fetch_all(conn) -> List[Dict[str, Any]]:
                     "name": r["name"],
                     "country": r["country"],
                     "attractions": r.get("attractions") if isinstance(r.get("attractions"), list) else json.loads(r.get("attractions", "[]")),
+                    "deleted": r["deleted"]
                 }
             )
         return cleaned
@@ -122,6 +124,30 @@ class _DestinationsList(list):
         with self._conn.cursor() as cur:
             cur.execute("DELETE FROM destinations WHERE id = %s;", (id,))
         self._reload()
+
+
+
+    def soft_delete(self, id: int) -> bool:
+        with self._conn.cursor() as cur:
+             cur.execute("UPDATE destinations SET deleted = True WHERE id = %s;", (id,))
+        self._reload()
+        return True
+    
+    def undelete_delete(self, id: int) -> bool:
+        with self._conn.cursor() as cur:
+                cur.execute("UPDATE destinations SET deleted = False WHERE id = %s;", (id,))
+        self._reload()
+        return True
+
+
+    
+    def add_new_row(self) -> bool:
+        with self._conn.cursor() as cur:
+            #cur.execute("ALTER TABLE destinations ADD deleted BOOL")
+            cur.execute("UPDATE destinations SET deleted = False")
+        self._reload()
+        return True
+        
 
 
 # Expose the list-like object expected by main.py
